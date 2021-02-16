@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package greet;
+
+message Greeting{
+	string firstName = 1;
+	string lastName=2;
+}
+
+message GreetingRequest {
+	Greeting greeting = 1;
+}
+
+message GreetingResponse {
+	string result = 1;
+}
+
+
+message GreetManyTimeRequest {
+	Greeting greeting = 1;
+}
+
+message GreetManyTimeResponse {
+	string result = 1;
+}
+
+
+message LongGreetRequest {
+	Greeting greeting = 1;
+}
+
+message LongGreetResponse {
+	string result = 1;
+}
+
+
+message GreetEveryoneRequest {
+	Greeting greeting = 1;
+}
+
+message GreetEveryoneResponse {
+	string result = 1;
+}
+
+
+
+service GreetingService
+{
+	//Unary
+	rpc Greet (GreetingRequest) returns (GreetingResponse) {}
+	rpc GreetSimple (Greeting) returns (GreetingResponse) {}
+
+	//ServerStreaming
+	rpc GreetManyTime (GreetManyTimeRequest) returns (stream GreetManyTimeResponse) {}
+
+	//ClientStreaming
+	rpc LongGreet (stream LongGreetRequest) returns (LongGreetResponse) {}
+
+	//Bidirectional Streaming
+	rpc GreetEveryone (stream GreetEveryoneRequest) returns (stream GreetEveryoneResponse){}
+}
