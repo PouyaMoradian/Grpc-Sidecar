@@ -1,4 +1,5 @@
-﻿using Grpc.Net.Client;
+﻿using Grpc.Core;
+using Grpc.Net.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,7 @@ namespace GrpcClientMock.Controllers
             try
             {
                 var sidecarAddress = _configuration["CommunicationSettings:Address"];
-
+                
                 using var channel = GrpcChannel.ForAddress(sidecarAddress);
                 var client = new Greet.GreetingService.GreetingServiceClient(channel);
 
@@ -35,6 +36,11 @@ namespace GrpcClientMock.Controllers
                 });
 
                 return Ok(reply);
+            }
+            catch (RpcException ex)
+            {
+                _logger.LogError(ex.ToString());
+                return new StatusCodeResult(500);
             }
             catch (System.Exception e)
             {

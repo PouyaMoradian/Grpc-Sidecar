@@ -1,5 +1,6 @@
 ﻿using Grpc.Sidecar.Client.Internal.ContractResolver;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -10,18 +11,21 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
     {
         private readonly RequestDelegate _next;
         private readonly IMessageDescriptionProvider _messageDescriptionProvider;
+        private readonly ILogger<GrpcRequestHandlerMiddleware> _logger;
 
         public GrpcRequestHandlerMiddleware(RequestDelegate next, 
-            IMessageDescriptionProvider messageDescriptionProvider)
+            IMessageDescriptionProvider messageDescriptionProvider,
+            ILogger<GrpcRequestHandlerMiddleware> logger)
         {
             _next = next;
             _messageDescriptionProvider = messageDescriptionProvider ?? throw new ArgumentNullException(nameof(messageDescriptionProvider));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
 
-            await ResoleMessageDescription(context);
+            await ResolveMessageDescription(context);
 
             //Resolving message description
             //Deserializeing message
@@ -36,7 +40,7 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
         }
 
 
-        private async Task ResoleMessageDescription(HttpContext context)
+        private async Task ResolveMessageDescription(HttpContext context)
         {
             try
             {
@@ -63,13 +67,9 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
             }
             catch (Exception e)
             {
-
-
+                _logger.LogError(e.ToString());
                 throw;
             }
-
         }
-
-
     }
 }
