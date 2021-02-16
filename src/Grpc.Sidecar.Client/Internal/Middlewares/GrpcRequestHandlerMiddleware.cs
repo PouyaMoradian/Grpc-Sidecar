@@ -10,11 +10,11 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
     internal class GrpcRequestHandlerMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IMessageDescriptionProvider _messageDescriptionProvider;
+        private readonly IMessageContractProvider _messageDescriptionProvider;
         private readonly ILogger<GrpcRequestHandlerMiddleware> _logger;
 
-        public GrpcRequestHandlerMiddleware(RequestDelegate next, 
-            IMessageDescriptionProvider messageDescriptionProvider,
+        public GrpcRequestHandlerMiddleware(RequestDelegate next,
+            IMessageContractProvider messageDescriptionProvider,
             ILogger<GrpcRequestHandlerMiddleware> logger)
         {
             _next = next;
@@ -25,23 +25,6 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
         public async Task InvokeAsync(HttpContext context)
         {
 
-            await ResolveMessageDescription(context);
-
-            //Resolving message description
-            //Deserializeing message
-
-            //Resolving service description
-            //Descovering the service target
-            //Creating client dynamically
-            //forwarding message
-
-            //Retrieve response from stream
-            //forwarding response to client
-        }
-
-
-        private async Task ResolveMessageDescription(HttpContext context)
-        {
             try
             {
                 var requestStream = context.Request.Body;
@@ -52,24 +35,43 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
                 var isCompressed = data.AsSpan().Slice(0, 1)[0] == 1;
                 var messageLength = data.AsSpan().Slice(4, 1)[0];
 
-                var messageDescriptions = _messageDescriptionProvider.GetMessageDescriptions();
 
-                //var greetingRequest = Serializer.Deserialize<Greeting>(data.AsSpan(5));
+                //Resolving message description
+                await ResolveMessageDescription(context);
+                //Deserializeing message
 
-                //var descriptor = fileDescriptionProvider.FileDescriptors[0];
+                //Resolving service description
+                //Descovering the service target
+                //Creating client dynamically
+                //forwarding message
 
-                //var messageType = descriptor.MessageTypes[0];
-
-                //var fieldDecleration = messageType.Fields.InDeclarationOrder()[0];
-
-
-                await _next(context);
+                //Retrieve response from stream
+                //forwarding response to client
             }
             catch (Exception e)
             {
                 _logger.LogError(e.ToString());
                 throw;
             }
+
+        }
+
+
+        private async Task ResolveMessageDescription(HttpContext context)
+        {
+
+
+            var messageDescriptions = _messageDescriptionProvider.GetMessageDescriptors();
+
+            //var greetingRequest = Serializer.Deserialize<Greeting>(data.AsSpan(5));
+
+            //var descriptor = fileDescriptionProvider.FileDescriptors[0];
+
+            //var messageType = descriptor.MessageTypes[0];
+
+            //var fieldDecleration = messageType.Fields.InDeclarationOrder()[0];
+
+
         }
     }
 }
