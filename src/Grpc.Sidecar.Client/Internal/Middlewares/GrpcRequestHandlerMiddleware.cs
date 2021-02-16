@@ -59,8 +59,6 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
 
         private async Task ResolveMessageDescription(HttpContext context)
         {
-
-
             var messageDescriptions = _messageDescriptionProvider.GetMessageDescriptors();
 
             //var greetingRequest = Serializer.Deserialize<Greeting>(data.AsSpan(5));
