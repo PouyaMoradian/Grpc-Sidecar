@@ -6,8 +6,11 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" Version="2.35.0" />
+    <PackageReference Include="protobuf-net" Version="3.0.73" />
   </ItemGroup>
 
-	
-	
+  <ItemGroup>
+    <ProjectReference Include="..\..\Grpc.Sidecar.CodeGenerator\Grpc.Sidecar.CodeGenerator.csproj" />
+  </ItemGroup>
+
 </Project>

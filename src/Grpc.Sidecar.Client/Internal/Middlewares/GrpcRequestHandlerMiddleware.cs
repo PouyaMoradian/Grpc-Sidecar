@@ -1,6 +1,7 @@
 ﻿using Grpc.Sidecar.Client.Internal.ContractResolver;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using ProtoBuf;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -35,13 +36,20 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
                 var isCompressed = data.AsSpan().Slice(0, 1)[0] == 1;
                 var messageLength = data.AsSpan().Slice(4, 1)[0];
 
-
                 //Resolving message description
-                await ResolveMessageDescription(context);
+                var resolvedType = ResolveMessageType(context);
+
                 //Deserializeing message
+                if (resolvedType is not null)
+                {
+                    Stream stream = new MemoryStream(data.AsSpan(5).ToArray());
+                    var greetingRequest = Serializer.Deserialize(resolvedType, stream);
+                }
 
                 //Resolving service description
+
                 //Descovering the service target
+
                 //Creating client dynamically
                 //forwarding message
 
@@ -57,19 +65,9 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
         }
 
 
-        private async Task ResolveMessageDescription(HttpContext context)
+        private Type ResolveMessageType(HttpContext context)
         {
-            var messageDescriptions = _messageDescriptionProvider.GetMessageDescriptors();
-
-            //var greetingRequest = Serializer.Deserialize<Greeting>(data.AsSpan(5));
-
-            //var descriptor = fileDescriptionProvider.FileDescriptors[0];
-
-            //var messageType = descriptor.MessageTypes[0];
-
-            //var fieldDecleration = messageType.Fields.InDeclarationOrder()[0];
-
-
+            return _messageDescriptionProvider.GetMessageType("Greeting");
         }
     }
 }

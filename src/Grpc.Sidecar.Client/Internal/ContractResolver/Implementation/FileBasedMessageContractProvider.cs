@@ -1,6 +1,7 @@
-﻿using Google.Protobuf;
-using Google.Protobuf.Reflection;
+﻿using Google.Protobuf.Reflection;
+using Grpc.Sidecar.CodeGenerator;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,84 +12,25 @@ namespace Grpc.Sidecar.Client.Internal.ContractResolver.Implementation
     public class FileBasedMessageContractProvider : IMessageContractProvider
     {
         private readonly IConfiguration _configuration;
-        protected List<FileDescriptor> _fileDescriptors = new List<FileDescriptor>();
-
+        protected List<Type> _clrTypes = new List<Type>();
 
         public FileBasedMessageContractProvider(IConfiguration configuration)
         {
             _configuration = configuration;
-            LoadDescriptorFiles(_configuration["DescriptionDiscoveryOption:DescriptionFilePath"]).Wait();
+            GenerateClrType(_configuration["DescriptionDiscoveryOption:DescriptionFilePath"]);
         }
 
-        public async Task LoadDescriptorFiles(string descriptorsfilePath)
+        protected void GenerateClrType(string descriptorsfilePath)
         {
-            string[] descriptorFiles = Directory.GetFiles(descriptorsfilePath, "*.desc");
-
-            foreach (var descriptorFile in descriptorFiles)
-            {
-                var file = await File.ReadAllBytesAsync(descriptorFile);
-                var byteString = ByteString.CopyFrom(file);
-
-                var descriptorSet = FileDescriptorSet.Parser.ParseFrom(file);
-                var byteStrings = descriptorSet.File.Select(f => f.ToByteString()).ToList();
-                IReadOnlyList<FileDescriptor> descriptors = FileDescriptor.BuildFromByteStrings(byteStrings);
-
-                _fileDescriptors.AddRange(descriptors);
-            }
-
-
-
-
-
-
-
+            string[] protoFiles = Directory.GetFiles(descriptorsfilePath, "*.proto");
+            foreach (var protoFile in protoFiles)
+                _clrTypes.AddRange(ProtoTypeGenerator.
+                    GetProtoClrTypes("greeting.proto", File.ReadAllBytes(protoFile)));
         }
 
-        public IList<ServiceDescriptor> GetServiceDescriptors()
+        public Type GetMessageType(string typeName) 
         {
-            var result = new List<ServiceDescriptor>();
-
-            foreach (var fileDescriptor in _fileDescriptors)
-            {
-                result.AddRange(fileDescriptor.Services);
-            }
-
-            return result;
-        }
-
-        public IList<MessageDescriptor> GetMessageDescriptors()
-        {
-            var result = new List<MessageDescriptor>();
-
-            foreach (var fileDescriptor in _fileDescriptors)
-            {
-                result.AddRange(fileDescriptor.MessageTypes);
-            }
-
-            return result;
-
-            //var result = new List<MessageDescription>();
-
-            //foreach (var fileDescriptor in FileDescriptors)
-            //{
-
-            //    foreach (var messageType in fileDescriptor.MessageTypes)
-            //    {
-            //        var messageDescritprion = new MessageDescription
-            //        {
-            //            ClassName = messageType.Name
-            //        };
-
-            //        foreach (var fieldDescription in messageType.Fields.InDeclarationOrder())
-            //        {
-            //            messageDescritprion.Fields.Add(fieldDescription.Name, fieldDescription.FieldType);
-            //        }
-
-            //        result.Add(messageDescritprion);
-            //    }
-            //}
-
-            //return result;
+            return _clrTypes.Where(t => t.Name == typeName).FirstOrDefault();
         }
     }
 }
