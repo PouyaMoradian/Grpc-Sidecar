@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using Google.Protobuf.Reflection;
+using System;
+using System.Collections.Generic;
 
 namespace Grpc.Sidecar.Client.Internal.ContractResolver
 {
-    interface IMessageDescriptionProvider
+    interface IMessageContractProvider
     {
-        public IList<ProtoMessageDescription> GetMessageDescriptions();
+        public Type GetMessageType(string typeName);
     }
 }

@@ -19,11 +19,7 @@ namespace Grpc.Sidecar.Client
                 option.IgnoreUnknownServices = true;
             });
 
-            services.AddHttpClient();
-            services.AddScoped<IMessageDescriptionProvider, 
-                FileBasedMessageDescriptionProvider>();
-
-
+            services.AddSingleton<IMessageContractProvider, FileBasedMessageContractProvider>();
 
             //This is for development purpose only
             services.Configure<KestrelServerOptions>(options =>

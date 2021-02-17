@@ -13,5 +13,13 @@ namespace GrpcServerMock.Services
                 Result = $"Hi {request.Greeting.FirstName} {request.Greeting.LastName}"
             });
         }
+
+        public async override Task<GreetingResponse> GreetSimple(Greeting request, ServerCallContext context)
+        {
+            return await Task.FromResult(new GreetingResponse
+            {
+                Result = $"Hi {request.FirstName} {request.LastName}"
+            });
+        }
     }
 }
