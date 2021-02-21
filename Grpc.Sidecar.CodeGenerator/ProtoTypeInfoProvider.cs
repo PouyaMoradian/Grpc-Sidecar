@@ -10,33 +10,41 @@ using System.Reflection;
 
 namespace Grpc.Sidecar.CodeGenerator
 {
-    public class ProtoTypeGenerator
+    public class ProtoTypeInfoProvider
     {
-        public static IList<Type> GetProtoClrTypes(string protoName, byte[] descriptorbyte)
-        {
-            var result = new List<Type>();
+        public IList<Assembly> GeneratedAssemblies { get; set; } = new List<Assembly>();
 
+        public void LoadProtoFile(string protoName, byte[] protoByte)
+        {
+            var sourceCodes = GenerateCSharpCode(protoName, protoByte);
+
+            foreach (var sourceCode in sourceCodes)
+            {
+                var generatedAssembly = GenerateAndLoadAssembly(sourceCode);
+                GeneratedAssemblies.Add(generatedAssembly);
+            }
+        }
+
+        private IList<string> GenerateCSharpCode(string protoName, byte[] protoByte)
+        {
+            //Error handling
             try
             {
                 var set = new FileDescriptorSet();
 
-                using var memoryStream = new MemoryStream(descriptorbyte);
+                using var memoryStream = new MemoryStream(protoByte);
                 using var textReader = new StreamReader(memoryStream);
 
                 //TODO includeInOutput=true ?
-                set.Add("greeting.proto", true, textReader);
+                set.Add(protoName, true, textReader);
                 set.Process();
 
-                var codeFiles = CSharpCodeGenerator.Default.Generate(set, options: new Dictionary<string, string> { { "services", "grpc" } });
+                //This is because of the fact that the current version of protobuf-net nuget does not support grpc service generation
+                var data = File.ReadAllText("D:\\Projects\\gRPC-Sidecar\\Grpc.Sidecar\\Grpc.Sidecar.CodeGenerator\\ProtoProxy.txt");
+                var codeFiles = new List<CodeFile> { new CodeFile("greeting.proto", data) };
 
-                foreach (var codeFile in codeFiles)
-                {
-                    var generatedType = GenerateClrTypeCore(codeFile.Text);
-
-                    result.AddRange(generatedType);
-                }
-
-                return result;
+                return codeFiles.Select(t => t.Text).ToList();
+                //var codeFiles = CSharpCodeGenerator.Default.Generate(set, options: new Dictionary<string, string> { { "services", "grpc" } });
             }
             catch (Exception e)
             {
@@ -45,13 +53,14 @@ namespace Grpc.Sidecar.CodeGenerator
             }
         }
 
-        private static IList<Type> GenerateClrTypeCore(string sourceCode)
+        private Assembly GenerateAndLoadAssembly(string sourceCode)
         {
             try
             {
                 MetadataReference[] references = new MetadataReference[]
                 {
                     MetadataReference.CreateFromFile("C:\\Program Files\\dotnet\\packs\\Microsoft.NETCore.App.Ref\\5.0.0\\ref\\net5.0\\System.Runtime.dll"),
+                    MetadataReference.CreateFromFile(typeof(ProtoBuf.Grpc.CallContext).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
                 };
 
@@ -76,8 +85,7 @@ namespace Grpc.Sidecar.CodeGenerator
                     }
                 }
 
-                var assembly = Assembly.Load(ms.ToArray());
-                return assembly.GetTypes();
+                return Assembly.Load(ms.ToArray());
             }
             catch (Exception e)
             {
