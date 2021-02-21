@@ -1,0 +1,136 @@
+﻿#region Designer generated code
+#pragma warning disable CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+namespace Greet
+{
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class Greeting : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1)]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string firstName { get; set; } = "";
+
+        [global::ProtoBuf.ProtoMember(2)]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string lastName { get; set; } = "";
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class GreetingRequest : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1, Name = @"greeting")]
+        public Greeting Greeting { get; set; }
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class GreetingResponse : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1, Name = @"result")]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string Result { get; set; } = "";
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class GreetManyTimeRequest : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1, Name = @"greeting")]
+        public Greeting Greeting { get; set; }
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class GreetManyTimeResponse : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1, Name = @"result")]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string Result { get; set; } = "";
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class LongGreetRequest : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1, Name = @"greeting")]
+        public Greeting Greeting { get; set; }
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class LongGreetResponse : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1, Name = @"result")]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string Result { get; set; } = "";
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class GreetEveryoneRequest : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1, Name = @"greeting")]
+        public Greeting Greeting { get; set; }
+
+    }
+
+    [global::ProtoBuf.ProtoContract()]
+    public partial class GreetEveryoneResponse : global::ProtoBuf.IExtensible
+    {
+        private global::ProtoBuf.IExtension __pbn__extensionData;
+        global::ProtoBuf.IExtension global::ProtoBuf.IExtensible.GetExtensionObject(bool createIfMissing)
+            => global::ProtoBuf.Extensible.GetExtensionObject(ref __pbn__extensionData, createIfMissing);
+
+        [global::ProtoBuf.ProtoMember(1, Name = @"result")]
+        [global::System.ComponentModel.DefaultValue("")]
+        public string Result { get; set; } = "";
+
+    }
+
+    [global::ProtoBuf.Grpc.Configuration.Service(@"greet.GreetingService")]
+    public partial interface IGreetingService
+    {
+        global::System.Threading.Tasks.ValueTask<GreetingResponse> GreetAsync(GreetingRequest value, global::ProtoBuf.Grpc.CallContext context = default);
+        global::System.Threading.Tasks.ValueTask<GreetingResponse> GreetSimpleAsync(Greeting value, global::ProtoBuf.Grpc.CallContext context = default);
+        global::System.Collections.Generic.IAsyncEnumerable<GreetManyTimeResponse> GreetManyTimeAsync(GreetManyTimeRequest value, global::ProtoBuf.Grpc.CallContext context = default);
+        global::System.Threading.Tasks.ValueTask<LongGreetResponse> LongGreetAsync(global::System.Collections.Generic.IAsyncEnumerable<LongGreetRequest> values, global::ProtoBuf.Grpc.CallContext context = default);
+        global::System.Collections.Generic.IAsyncEnumerable<GreetEveryoneResponse> GreetEveryoneAsync(global::System.Collections.Generic.IAsyncEnumerable<GreetEveryoneRequest> values, global::ProtoBuf.Grpc.CallContext context = default);
+    }
+
+}
+
+#pragma warning restore CS0612, CS0618, CS1591, CS3021, IDE0079, IDE1006, RCS1036, RCS1057, RCS1085, RCS1192
+#endregion

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using ProtoBuf;
 using System;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Grpc.Sidecar.Client.Internal.Middlewares
@@ -37,7 +38,10 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
                 var messageLength = data.AsSpan().Slice(4, 1)[0];
 
                 //Resolving message description
-                var resolvedType = ResolveMessageType(context);
+
+                var methodInfo = GetMethodInfo(context);
+                var parameter = methodInfo.GetParameters();
+                var resolvedType = parameter[0].ParameterType;
 
                 //Deserializeing message
                 if (resolvedType is not null)
@@ -64,10 +68,17 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
 
         }
 
-
         private Type ResolveMessageType(HttpContext context)
         {
             return _messageDescriptionProvider.GetMessageType("Greeting");
+        }
+
+        private MethodInfo GetMethodInfo(HttpContext context)
+        {
+            var requestPath = context.Request.Path.Value;
+            var methodName = requestPath.Split('/')[2];
+
+            return _messageDescriptionProvider.GetMethodInfo(methodName);
         }
     }
 }

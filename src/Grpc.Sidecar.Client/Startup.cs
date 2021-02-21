@@ -1,6 +1,7 @@
 using Grpc.Sidecar.Client.Internal.ContractResolver;
 using Grpc.Sidecar.Client.Internal.ContractResolver.Implementation;
 using Grpc.Sidecar.Client.Internal.Middlewares;
+using Grpc.Sidecar.CodeGenerator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -20,6 +21,8 @@ namespace Grpc.Sidecar.Client
             });
 
             services.AddSingleton<IMessageContractProvider, FileBasedMessageContractProvider>();
+
+            services.AddProtoTypeInfoProvider();
 
             //This is for development purpose only
             services.Configure<KestrelServerOptions>(options =>
