@@ -16,6 +16,7 @@
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
 		<PackageReference Include="protobuf-net" Version="3.0.73" />
+		<PackageReference Include="protobuf-net.Grpc" Version="1.0.147" />
 		<PackageReference Include="protobuf-net.Grpc.Reflection" Version="1.0.147" />
 	</ItemGroup>
 

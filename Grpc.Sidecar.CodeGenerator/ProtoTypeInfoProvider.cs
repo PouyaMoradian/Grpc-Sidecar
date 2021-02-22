@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Channels;
 
 namespace Grpc.Sidecar.CodeGenerator
 {
@@ -45,6 +46,7 @@ namespace Grpc.Sidecar.CodeGenerator
 
                 return codeFiles.Select(t => t.Text).ToList();
                 //var codeFiles = CSharpCodeGenerator.Default.Generate(set, options: new Dictionary<string, string> { { "services", "grpc" } });
+
             }
             catch (Exception e)
             {
