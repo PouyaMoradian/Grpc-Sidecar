@@ -12,7 +12,9 @@ namespace Grpc.Sidecar.CodeGenerator
         public static IServiceCollection AddProtoTypeInfoProvider(this IServiceCollection services) 
         {
             //TODO create an interface for this
+            services.AddSingleton<IGrpcInvokerCodeBuilder, GrpcUnaryInvokerCodeBuilder>();
             services.AddSingleton<ProtoTypeInfoProvider>();
+          
             return services;
         }
     }

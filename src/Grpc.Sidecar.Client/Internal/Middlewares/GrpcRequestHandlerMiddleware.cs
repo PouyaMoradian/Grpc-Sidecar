@@ -56,8 +56,12 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
                 var greetingRequest = Serializer.Deserialize(resolvedType, stream);
                 //}
 
+                var invoker = _messageDescriptionProvider.GetInvoker(methodInfo.Name);
+
 
                 var channel = GrpcChannel.ForAddress("https://localhost:5001");
+
+                var invokerResult = await invoker.Invoke(greetingRequest,channel,null);
 
 
                 var createGrpcServiceMethodInfo = typeof(GrpcClientFactory).GetMethod(nameof(GrpcClientFactory.CreateGrpcService), new Type[] { typeof(ChannelBase), typeof(ClientFactory) })
@@ -75,6 +79,8 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
 
                 var method = service.GetType().GetRuntimeMethods().FirstOrDefault(t => t.Name.Contains(methodInfo.Name));
 
+
+
                 dynamic result = method.Invoke(service, new object[] { greetingRequest, null });
                 await result;
                 var response = result.GetAwaiter().GetResult();
@@ -83,18 +89,18 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
 
                 using var responseMemoryStream = new MemoryStream();
                 using var responseDataMemoryStream = new MemoryStream();
-                
+
                 Serializer.Serialize(responseDataMemoryStream, response);
-                
-                await responseMemoryStream.WriteAsync(new byte[] {0,0,0,0, (byte)responseDataMemoryStream.Length});
-                
-                context.Response.Headers.Add("content-type",new Microsoft.Extensions.Primitives.StringValues("application/grpc"));
-                
+
+                await responseMemoryStream.WriteAsync(new byte[] { 0, 0, 0, 0, (byte)responseDataMemoryStream.Length });
+
+                context.Response.Headers.Add("content-type", new Microsoft.Extensions.Primitives.StringValues("application/grpc"));
+
                 await responseMemoryStream.WriteAsync(responseDataMemoryStream.ToArray());
 
                 await responseMemoryStream.CopyToAsync(context.Response.Body);
-                
-                
+
+
                 //Resolving service description
 
                 //Descovering the service target
@@ -125,5 +131,8 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
 
             return _messageDescriptionProvider.GetMethodInfo(methodName);
         }
+
+
+
     }
 }

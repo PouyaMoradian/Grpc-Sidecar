@@ -7,28 +7,87 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Channels;
+using static Grpc.Sidecar.CodeGenerator.GrpcUnaryInvokerCodeBuilder;
 
 namespace Grpc.Sidecar.CodeGenerator
 {
     public class ProtoTypeInfoProvider
     {
+        private readonly IGrpcInvokerCodeBuilder _invokerCodeBuilder;
+        public ProtoTypeInfoProvider(IGrpcInvokerCodeBuilder invokerCodeBuilder)
+        {
+            _invokerCodeBuilder = invokerCodeBuilder ?? throw new ArgumentNullException(nameof(invokerCodeBuilder));
+        }
+
         public IList<Assembly> GeneratedAssemblies { get; set; } = new List<Assembly>();
 
         public void LoadProtoFile(string protoName, byte[] protoByte)
         {
             var sourceCodes = GenerateCSharpCode(protoName, protoByte);
 
-            foreach (var sourceCode in sourceCodes)
+            var generatedProtoAssembly = GenerateAndLoadProtoAssembly(sourceCodes, new MetadataReference[]
+                {
+                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(ProtoBuf.Grpc.CallContext).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
+                    MetadataReference.CreateFromFile(AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(t=>t.GetName().Name == "System.Runtime").Location)
+                });
+
+            GeneratedAssemblies.Add(generatedProtoAssembly.assembly);
+
+            var GrpcServiceInvokers = GenerateAndLoadGrpcInvokers(generatedProtoAssembly.assembly, generatedProtoAssembly.assemblyBytes);
+            GeneratedAssemblies.Add(GrpcServiceInvokers);
+        }
+
+        private Assembly GenerateAndLoadGrpcInvokers(Assembly generatedProtoAssembly, byte[] generatedProtoAssemblyByte)
+        {
+            var serviceDescriptions = CreateServiceDescriptions(generatedProtoAssembly);
+
+            //TODO change the null value
+            var codes = serviceDescriptions.Select(t => _invokerCodeBuilder.GenerateCode(t, null));
+
+            var (result, _) = GenerateAndLoadProtoAssembly(codes.ToList(), new MetadataReference[]
+                {
+                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                    //This one might be changed due to refactoring
+                    MetadataReference.CreateFromFile(Assembly.GetExecutingAssembly().Location),
+                    MetadataReference.CreateFromFile(typeof(Core.ChannelBase).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(ProtoBuf.Grpc.Configuration.ClientFactory).Assembly.Location),
+                    MetadataReference.CreateFromFile(AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(t=>t.GetName().Name == "System.Runtime").Location)
+                });
+
+            return result;
+        }
+
+        private IList<ServiceDescription> CreateServiceDescriptions(Assembly protoAssemblies)
+        {
+            var serviceTypes = protoAssemblies.GetTypes()
+                .Where(t => t.IsInterface && t.CustomAttributes.Any(a => a.AttributeType ==
+                typeof(ProtoBuf.Grpc.Configuration.ServiceAttribute)));
+
+            return serviceTypes.Select(t => GetTypeDescriptions(t)).ToList();
+        }
+
+        private static ServiceDescription GetTypeDescriptions(Type serviceType)
+        {
+            return new ServiceDescription()
             {
-                var generatedAssembly = GenerateAndLoadAssembly(sourceCode);
-                GeneratedAssemblies.Add(generatedAssembly);
-            }
+                ServiceNamespaceName = serviceType.Namespace,
+                MethodDescriptions = serviceType.GetMethods().Where(t => t.Name == "GreetSimpleAsync").Select(m =>
+                   new MethodDescription
+                   {
+                       //TODO
+                       CommmunicationType = MethodDescription.MethodType.Unary,
+                       Name = m.Name,
+                       RequestTypeName = m.GetParameters()[0].ParameterType.Name,
+                       ResponseTypeName = m.ReturnType.GenericTypeArguments[0].Name,
+                       ServiceTypeName = serviceType.Name
+                   }).ToList()
+            };
         }
 
         private IList<string> GenerateCSharpCode(string protoName, byte[] protoByte)
         {
-            //Error handling
             try
             {
                 var set = new FileDescriptorSet();
@@ -55,21 +114,14 @@ namespace Grpc.Sidecar.CodeGenerator
             }
         }
 
-        private Assembly GenerateAndLoadAssembly(string sourceCode)
+        private (Assembly assembly, byte[] assemblyBytes) GenerateAndLoadProtoAssembly(IList<string> sourceCodes, MetadataReference[] metadataReferences)
         {
             try
             {
-                MetadataReference[] references = new MetadataReference[]
-                {
-                    MetadataReference.CreateFromFile("C:\\Program Files\\dotnet\\packs\\Microsoft.NETCore.App.Ref\\5.0.0\\ref\\net5.0\\System.Runtime.dll"),
-                    MetadataReference.CreateFromFile(typeof(ProtoBuf.Grpc.CallContext).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(ProtoBuf.ProtoContractAttribute).Assembly.Location),
-                };
-
                 var comp = CSharpCompilation.Create(
                    assemblyName: Path.GetRandomFileName(),
-                   syntaxTrees: new[] { CSharpSyntaxTree.ParseText(sourceCode) },
-                   references: references,
+                   syntaxTrees: sourceCodes.Select(t => CSharpSyntaxTree.ParseText(t)),
+                   references: metadataReferences,
                    options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                );
 
@@ -87,7 +139,8 @@ namespace Grpc.Sidecar.CodeGenerator
                     }
                 }
 
-                return Assembly.Load(ms.ToArray());
+                var assemblyBytes = ms.ToArray();
+                return (Assembly.Load(assemblyBytes), assemblyBytes);
             }
             catch (Exception e)
             {
@@ -96,4 +149,8 @@ namespace Grpc.Sidecar.CodeGenerator
             }
         }
     }
+
+
+
+
 }

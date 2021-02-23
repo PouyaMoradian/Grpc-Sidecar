@@ -43,5 +43,15 @@ namespace Grpc.Sidecar.Client.Internal.ContractResolver.Implementation
             return _protoTypeInfoProvider?.GeneratedAssemblies?.SelectMany(t => t.GetTypes())
                 .SelectMany(r => r.GetMethods()).FirstOrDefault(t => t.Name == methodName + "Async" || t.Name == methodName);
         }
+
+        public IGrpcInvoker GetInvoker(string methodName)
+        {
+            //Here it can search in chached expression
+            var generatedGrpcInvoker = 
+                _protoTypeInfoProvider?.GeneratedAssemblies?.SelectMany(t => t.GetTypes()).FirstOrDefault(t=>t.Name == $"{methodName}Invoker");
+
+            return (IGrpcInvoker)Activator.CreateInstance(generatedGrpcInvoker);
+        }
+
     }
 }
