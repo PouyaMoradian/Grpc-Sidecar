@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Grpc.Sidecar.CodeGenerator.Abstraction;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,9 @@ namespace Grpc.Sidecar.CodeGenerator
             services.AddSingleton<IGrpcInvokerCodeBuilder, GrpcUnaryInvokerCodeBuilder>();
             services.AddSingleton<ProtoTypeInfoProvider>();
           
+            services.AddSingleton<IGrpcInvokerCodeGenerator, GrpcInvokerCodeGenerator>();
+            services.AddSingleton<ProtobufTypeGenerator>();
+
             return services;
         }
     }

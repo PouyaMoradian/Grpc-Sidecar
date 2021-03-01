@@ -1,13 +1,16 @@
 ﻿using Google.Protobuf.Reflection;
+using Grpc.Sidecar.CodeGenerator.Abstraction;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using ProtoBuf.Reflection;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using static Grpc.Sidecar.CodeGenerator.GrpcUnaryInvokerCodeBuilder;
+using static Grpc.Sidecar.CodeGenerator.Abstraction.GrpcUnaryInvokerCodeBuilder;
+
 
 namespace Grpc.Sidecar.CodeGenerator
 {
@@ -34,6 +37,7 @@ namespace Grpc.Sidecar.CodeGenerator
                 });
 
             GeneratedAssemblies.Add(generatedProtoAssembly.assembly);
+            var types = generatedProtoAssembly.assembly.GetTypes();
 
             var GrpcServiceInvokers = GenerateAndLoadGrpcInvokers(generatedProtoAssembly.assembly, generatedProtoAssembly.assemblyBytes);
             GeneratedAssemblies.Add(GrpcServiceInvokers);
@@ -50,11 +54,15 @@ namespace Grpc.Sidecar.CodeGenerator
                 {
                     MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
                     //This one might be changed due to refactoring
-                    MetadataReference.CreateFromFile(Assembly.GetExecutingAssembly().Location),
+                    //MetadataReference.CreateFromFile(Assembly.GetExecutingAssembly().Location),
+                    MetadataReference.CreateFromFile(Assembly.GetAssembly(typeof(IGrpcInvoker)).Location),
+                    MetadataReference.CreateFromImage(generatedProtoAssemblyByte),
                     MetadataReference.CreateFromFile(typeof(Core.ChannelBase).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof(ProtoBuf.Grpc.Configuration.ClientFactory).Assembly.Location),
                     MetadataReference.CreateFromFile(AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(t=>t.GetName().Name == "System.Runtime").Location)
                 });
+
+            var typr = result.GetTypes();
 
             return result;
         }
@@ -125,7 +133,7 @@ namespace Grpc.Sidecar.CodeGenerator
                    options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                );
 
-                using var ms = new MemoryStream();
+                using var ms = new MemoryStream(8000);
                 var result = comp.Emit(ms);
 
                 if (!result.Success)
@@ -140,11 +148,14 @@ namespace Grpc.Sidecar.CodeGenerator
                 }
 
                 var assemblyBytes = ms.ToArray();
-                return (Assembly.Load(assemblyBytes), assemblyBytes);
+                var assebly = AppDomain.CurrentDomain.Load(assemblyBytes); //Assembly.Load(assemblyBytes);
+
+                var data = assebly.GetTypes();
+
+                return (assebly, assemblyBytes);
             }
             catch (Exception e)
             {
-
                 throw;
             }
         }

@@ -49,53 +49,28 @@ namespace Grpc.Sidecar.Client.Internal.Middlewares
                 var parameter = methodInfo.GetParameters();
                 var resolvedType = parameter[0].ParameterType;
 
-                ////Deserializeing message
-                //if (resolvedType is not null)
-                //{
                 Stream stream = new MemoryStream(data.AsSpan(5).ToArray());
                 var greetingRequest = Serializer.Deserialize(resolvedType, stream);
-                //}
 
                 var invoker = _messageDescriptionProvider.GetInvoker(methodInfo.Name);
-
 
                 var channel = GrpcChannel.ForAddress("https://localhost:5001");
 
                 var invokerResult = await invoker.Invoke(greetingRequest,channel,null);
 
-
-                var createGrpcServiceMethodInfo = typeof(GrpcClientFactory).GetMethod(nameof(GrpcClientFactory.CreateGrpcService), new Type[] { typeof(ChannelBase), typeof(ClientFactory) })
-                    .MakeGenericMethod(methodInfo.DeclaringType);
-
-                var mehtodArg = Expression.Parameter(typeof(GrpcChannel));
-                var mehtodArg2 = Expression.Parameter(typeof(ClientFactory));
-                var body = Expression.Call(createGrpcServiceMethodInfo, mehtodArg, mehtodArg2);
-
-                var expr = Expression.Lambda<Func<GrpcChannel, ClientFactory, object>>(body, mehtodArg, mehtodArg2);
-
-                var function = expr.Compile();
-
-                var service = function(channel, null);
-
-                var method = service.GetType().GetRuntimeMethods().FirstOrDefault(t => t.Name.Contains(methodInfo.Name));
-
-
-
-                dynamic result = method.Invoke(service, new object[] { greetingRequest, null });
-                await result;
-                var response = result.GetAwaiter().GetResult();
-
-                var converted = Convert.ChangeType(response, methodInfo.ReturnType.GetGenericArguments()[0]);
+                var converted = Convert.ChangeType(invokerResult, methodInfo.ReturnType.GetGenericArguments()[0]);
 
                 using var responseMemoryStream = new MemoryStream();
                 using var responseDataMemoryStream = new MemoryStream();
 
-                Serializer.Serialize(responseDataMemoryStream, response);
+                Serializer.Serialize(responseDataMemoryStream, converted);
 
                 await responseMemoryStream.WriteAsync(new byte[] { 0, 0, 0, 0, (byte)responseDataMemoryStream.Length });
 
                 context.Response.Headers.Add("content-type", new Microsoft.Extensions.Primitives.StringValues("application/grpc"));
+                context.Response.Headers.Add("grpc-status", new Microsoft.Extensions.Primitives.StringValues("0"));
 
+                
                 await responseMemoryStream.WriteAsync(responseDataMemoryStream.ToArray());
 
                 await responseMemoryStream.CopyToAsync(context.Response.Body);

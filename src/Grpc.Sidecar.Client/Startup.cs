@@ -20,7 +20,10 @@ namespace Grpc.Sidecar.Client
                 option.IgnoreUnknownServices = true;
             });
 
-            services.AddSingleton<IMessageContractProvider, FileBasedMessageContractProvider>();
+            services.AddSingleton<IMessageContractProvider, ProtoServiceDescriptionBasedCodeGenerator>();
+            //services.AddSingleton<IMessageContractProvider, FileBasedMessageContractProvider>();
+
+            
 
             services.AddProtoTypeInfoProvider();
 

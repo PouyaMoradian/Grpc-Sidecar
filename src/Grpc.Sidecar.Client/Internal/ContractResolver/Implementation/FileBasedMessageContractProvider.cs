@@ -1,4 +1,5 @@
 ﻿using Grpc.Sidecar.CodeGenerator;
+using Grpc.Sidecar.CodeGenerator.Abstraction;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -47,8 +48,8 @@ namespace Grpc.Sidecar.Client.Internal.ContractResolver.Implementation
         public IGrpcInvoker GetInvoker(string methodName)
         {
             //Here it can search in chached expression
-            var generatedGrpcInvoker = 
-                _protoTypeInfoProvider?.GeneratedAssemblies?.SelectMany(t => t.GetTypes()).FirstOrDefault(t=>t.Name == $"{methodName}Invoker");
+            var generatedGrpcInvoker =  AppDomain.CurrentDomain.GetAssemblies().SelectMany(t => t.GetTypes()).FirstOrDefault(r => r.Name == $"{methodName}Invoker");
+            //_protoTypeInfoProvider?.GeneratedAssemblies?
 
             return (IGrpcInvoker)Activator.CreateInstance(generatedGrpcInvoker);
         }

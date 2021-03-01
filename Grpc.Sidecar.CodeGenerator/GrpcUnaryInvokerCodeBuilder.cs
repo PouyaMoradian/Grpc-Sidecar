@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Google.Protobuf.Reflection;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Grpc.Sidecar.CodeGenerator
+namespace Grpc.Sidecar.CodeGenerator.Abstraction
 {
 
     public class GrpcUnaryInvokerCodeBuilder : IGrpcInvokerCodeBuilder
@@ -97,7 +98,7 @@ namespace Grpc.Sidecar.CodeGenerator
                     using Grpc.Core;
                     using ProtoBuf.Grpc.Configuration;
                     using System.Threading.Tasks;
-                    using Grpc.Sidecar.CodeGenerator;
+                    using Grpc.Sidecar.CodeGenerator.Abstraction;
                 ";
         }
 
@@ -109,7 +110,7 @@ namespace Grpc.Sidecar.CodeGenerator
 
             //TODO use nameof(GrpcUnaryInvoker)
             return $@"
-                    public class {methodName}Invoker : GrpcUnaryInvoker<{serviceTypeName}, 
+                    public class {methodName}AsyncInvoker : GrpcUnaryInvoker<I{serviceTypeName}, 
                                                                    {requestTypeName}, 
                                                                    {responseTypeName}>
                     {{
@@ -117,7 +118,7 @@ namespace Grpc.Sidecar.CodeGenerator
                                                                                  ChannelBase channel,
                                                                                  ClientFactory clientFactory)
                         {{
-                            return await CreateService(channel, clientFactory).{methodName}(requst);
+                            return await CreateService(channel, clientFactory).{methodName}Async(requst);
                         }}
                     }}";
         }
