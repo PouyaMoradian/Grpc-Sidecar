@@ -1,8 +1,14 @@
-﻿using Google.Protobuf.WellKnownTypes;
+﻿using Google.Protobuf.Reflection;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Hades.Core.Abbstraction.Grpc;
+using Hades.Core.Abbstraction.ServiceDiscovery;
 using Hades.Core.Grpc;
+using Hades.Core;
 using Hades.Test.Common;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Hades.Test.Server
@@ -14,27 +20,49 @@ namespace Hades.Test.Server
         async static Task Main(string[] args)
         {
             Console.WriteLine("Grpc Server!");
-            await AddgRpcServerByServer();
+            //await AddgRpcServerByServer();
         }
 
 
 
-        private static async Task AddgRpcServerByServer()
+        private static async Task AddgRpcServerByServer(IServiceDefinition[] services)
         {
-            var method = new UnaryGrpcMethod<HelloRequest, HelloReply>("SayHello", request =>
+            var grpcServices = new List<GrpcService>();
+            foreach (var service in services)
             {
-                var val = new HelloReply { Discription = "Hello " + request.Name };
-                val.Faild = new Faild() { Error = "Unexpected error occured." };
-                val.EchoValue = Any.Pack(request.RequestPayload);
-                return Task.FromResult(val);
-            });
-            var grpcService = new GrpcService("helloworld.Greeter", new[] { method });
+                var methods = service.Methods.Select(t =>
+                {
+                    if (!t.HasClientStreaming && !t.HasServerStreaming)
+                    {
+                        var method = new UnaryGrpcMethod<HelloRequest, HelloReply>(t.Name, request =>
+                        {
+                            //push to queue
+                            return Task.FromResult(new HelloReply());
+                        });
+                        return method;
+                    }
+                    //else if (t.HasClientStreaming && !t.HasServerStreaming)
+                    //{
+                    //    var method = new ClientStreamingGrpcMethod<HelloRequest, HelloReply>(t.Name, request =>
+                    //    {
+                    //        return Task.FromResult(new HelloReply());
+                    //    });
+                    //    return method;
+                    //}
+                    throw new NotImplementedException();
+                });
+                var grpcService = new GrpcService(service.Name, methods);
+                grpcServices.Add(grpcService);
+
+            }
 
             Grpc.Core.Server server = new Grpc.Core.Server
             {
-                Services = { grpcService.Build() },
                 Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
             };
+            grpcServices.Select(t => t.Build()).Foreach(server.Services.Add);
+
+
             server.Start();
 
             Console.WriteLine("Greeter server listening on port " + Port);
