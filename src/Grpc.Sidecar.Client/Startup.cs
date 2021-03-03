@@ -1,3 +1,5 @@
+using Greet;
+using Grpc.Net.Client;
 using Grpc.Sidecar.Client.Internal.ContractResolver;
 using Grpc.Sidecar.Client.Internal.ContractResolver.Implementation;
 using Grpc.Sidecar.Client.Internal.Middlewares;
@@ -23,7 +25,7 @@ namespace Grpc.Sidecar.Client
             services.AddSingleton<IMessageContractProvider, ProtoServiceDescriptionBasedCodeGenerator>();
             //services.AddSingleton<IMessageContractProvider, FileBasedMessageContractProvider>();
 
-            
+
 
             services.AddProtoTypeInfoProvider();
 

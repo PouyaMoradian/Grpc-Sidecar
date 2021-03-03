@@ -3,6 +3,7 @@ using Grpc.Net.Client;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace GrpcClientMock.Controllers
@@ -26,9 +27,21 @@ namespace GrpcClientMock.Controllers
             {
                 var sidecarAddress = _configuration["CommunicationSettings:Address"];
                 
-                using var channel = GrpcChannel.ForAddress(sidecarAddress);
-                var client = new Greet.GreetingService.GreetingServiceClient(channel);
+                //using var channel = GrpcChannel.ForAddress(sidecarAddress);
 
+
+                var httpHandler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback =
+                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                };
+
+                var channel = GrpcChannel.ForAddress(sidecarAddress,
+                    new GrpcChannelOptions { HttpHandler = httpHandler });
+
+
+
+                var client = new Greet.GreetingService.GreetingServiceClient(channel);
                 var reply = await client.GreetSimpleAsync(new Greet.Greeting()
                 {
                     FirstName = "Pouya",
